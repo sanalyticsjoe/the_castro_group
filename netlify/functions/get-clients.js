@@ -3,16 +3,13 @@ require('dotenv').config();
 const { Client } = require('@notionhq/client');
 
 const { MY_NOTION_API_KEY, NOTION_DATABASE_ID } = process.env;
-const { NOTION_API_KEY, NOTION_DATABASE_ID } = process.env;
 
 // Initialize the Notion client
 const notion = new Client({ auth: MY_NOTION_API_KEY });
-const notion = new Client({ auth: NOTION_API_KEY });
 
 exports.handler = async function(event, context) {
   // A check to ensure environment variables are loaded in the function's environment
   if (!MY_NOTION_API_KEY || !NOTION_DATABASE_ID) {
-  if (!NOTION_API_KEY || !NOTION_DATABASE_ID) {
     console.error('Server Error: Missing NOTION_API_KEY or NOTION_DATABASE_ID');
     return {
       statusCode: 500,
