@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ride or Die</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0E7490; /* Dark Teal from logo */
+      --card-bg: #083344; /* Darker shade for cards/nav */
+      --text-main: #f0f9ff; /* Light cyan/white for text */
+      --text-muted: #a3a3a3;
+      --primary: #f0f9ff;
+      --primary-active: #ffffff;
+      --header-height: 60px;
+      --nav-height: 60px;
+      --title-font: 'Poppins', sans-serif;
+      --body-font: 'Roboto', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--body-font);
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden; /* Prevents body scroll */
+    }
+
+    .main-header {
+      display: flex;
+      align-items: center;
+      height: var(--header-height);
+      background-color: var(--card-bg);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-title-container {
+      flex-grow: 1;
+      display: flex;
+      justify-content: center;
+      padding-right: 1rem; /* Balance padding */
+    }
+    .main-header h1 {
+      font-family: var(--title-font);
+      font-weight: 500; /* Less bold */
+      text-transform: uppercase; /* All caps */
+      font-size: 1.2rem; /* Smaller font size to fit on screen */
+      display: flex; /* Use flexbox to align icon and text */
+      align-items: center;
+    }
+    .main-header h1 i {
+      margin-left: 0.5rem; /* Space between title and icon */
+    }
+    .main-header .logo {
+      height: var(--header-height); /* Fill the header height */
+      width: auto; /* Maintain aspect ratio */
+      margin-right: 1rem; /* Space between logo and title */
+    }
+
+    .swipe-container {
+      flex-grow: 1;
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch; /* Momentum scrolling on iOS */
+    }
+
+    .screen {
+      flex: 0 0 100%;
+      width: 100%;
+      scroll-snap-align: start;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+    .screen h2 {
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .bottom-nav {
+      display: flex;
+      justify-content: space-around;
+      height: var(--nav-height);
+      background-color: var(--card-bg);
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-grow: 1;
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      transition: color 0.2s ease;
+    }
+    .nav-item i { font-size: 1.25rem; margin-bottom: 4px; }
+    .nav-item.active { color: var(--primary-active); }
+
+    /* Detail View */
+    .detail-view {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-color);
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+    }
+    .detail-view.active {
+      transform: translateY(0);
+    }
+    .detail-header {
+      display: flex;
+      align-items: center;
+      padding: 0 1rem;
+      height: var(--header-height);
+      background-color: var(--card-bg);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      flex-shrink: 0;
+    }
+    .detail-header h3 { margin: 0; flex-grow: 1; text-align: center; }
+    .detail-header button {
+      background: none;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .detail-content {
+      padding: 1.5rem;
+      flex-grow: 1;
+      overflow-y: auto;
+    }
+
+    /* Search Bar Style */
+    #client-search {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1.5rem;
+      background-color: var(--card-bg);
+      border: 1px solid #0e7490;
+      border-radius: 8px;
+      color: var(--text-main);
+      font-size: 1rem;
+    }
+    #client-search::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Client Card Styles */
+    .client-card {
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .client-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+    }
+    .client-card h4 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.1rem;
+      color: var(--text-main);
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background-color: #1e40af; /* Default blue */
+      color: #dbeafe;
+      margin-bottom: 1rem;
+    }
+    .status-badge[data-status="Lead"] { background-color: #991b1b; color: #fee2e2; }
+    .status-badge[data-status="Active Buyer"] { background-color: #1e40af; color: #dbeafe; }
+    .status-badge[data-status="Under Contract"] { background-color: #b45309; color: #fef3c7; }
+    .client-card p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sticky Top Header -->
+  <header class="main-header">
+    <img src="images/your-logo.png" alt="Company Logo" class="logo">
+    <div class="header-title-container">
+      <h1>Ride or Die <i class="fas fa-skull-crossbones"></i></h1>
+    </div>
+  </header>
+
+  <!-- Swipeable Main Content -->
+  <main class="swipe-container">
+    <section id="todo" class="screen">
+      <h2><i class="fas fa-list-check"></i>To-Do</h2>
+      <p>Your tasks for the day will appear here.</p>
+      <button class="open-detail-btn">Open Detail View</button>
+    </section>
+    <section id="crm" class="screen">
+      <h2><i class="fas fa-address-book"></i>CRM</h2>
+      <input type="search" id="client-search" placeholder="Search clients...">
+      <div id="client-list" class="grid"></div>
+    </section>
+    <section id="transactions" class="screen">
+      <h2><i class="fas fa-file-invoice-dollar"></i>Transactions</h2>
+      <p>All your property transactions will be tracked here.</p>
+    </section>
+    <section id="leads" class="screen">
+      <h2><i class="fas fa-funnel-dollar"></i>Leads</h2>
+      <p>New leads will be listed here.</p>
+    </section>
+  </main>
+
+  <!-- Sticky Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="#todo" class="nav-item active">
+      <i class="fas fa-check-square"></i>
+      <span>To-Do</span>
+    </a>
+    <a href="#crm" class="nav-item">
+      <i class="fas fa-users"></i>
+      <span>CRM</span>
+    </a>
+    <a href="#transactions" class="nav-item">
+      <i class="fas fa-handshake"></i>
+      <span>Transactions</span>
+    </a>
+    <a href="#leads" class="nav-item">
+      <i class="fas fa-lightbulb"></i>
+      <span>Leads</span>
+    </a>
+  </nav>
+
+  <!-- Hidden Detail View -->
+  <div id="detail-view" class="detail-view">
+    <header class="detail-header">
+      <button id="close-detail-btn"><i class="fas fa-chevron-down"></i></button>
+      <h3>Detail Title</h3>
+    </header>
+    <div class="detail-content">
+      <p>This is the detail view. Content for a specific item will be loaded here.</p>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const swipeContainer = document.querySelector('.swipe-container');
+      const navItems = document.querySelectorAll('.nav-item');
+      const screens = document.querySelectorAll('.screen');
+
+      // --- Navigation Highlighting on Scroll ---
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const id = entry.target.id;
+            navItems.forEach(item => {
+              item.classList.toggle('active', item.hash === `#${id}`);
+            });
+          }
+        });
+      }, { root: swipeContainer, threshold: 0.5 });
+
+      screens.forEach(screen => observer.observe(screen));
+
+      // --- Navigation Click to Scroll ---
+      navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          const targetScreen = document.querySelector(item.hash);
+          if (targetScreen) {
+            targetScreen.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      });
+
+      // --- Detail View Logic ---
+      const detailView = document.getElementById('detail-view');
+      const closeDetailBtn = document.getElementById('close-detail-btn');
+      const openDetailBtns = document.querySelectorAll('.open-detail-btn');
+
+      openDetailBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          detailView.classList.add('active');
+        });
+      });
+
+      closeDetailBtn.addEventListener('click', () => {
+        detailView.classList.remove('active');
+      });
+
+      // --- CRM Search Filtering ---
+      const searchInput = document.getElementById('client-search');
+      searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const clientCards = document.querySelectorAll('.client-card');
+
+        clientCards.forEach(card => {
+          const clientName = card.querySelector('h4').textContent.toLowerCase();
+          if (clientName.includes(searchTerm)) {
+            card.style.display = 'block';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+
+      // --- CRM Data Fetching ---
+      async function loadClients() {
+        const clientList = document.getElementById('client-list');
+        clientList.innerHTML = '<p>Loading clients...</p>';
+
+        try {
+          // This endpoint needs to be created on your server (e.g., as a Netlify Function)
+          // It should connect to your Notion database and return the client data.
+          const response = await fetch('/api/get-clients');
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const clients = await response.json();
+
+          clientList.innerHTML = ''; // Clear loading message
+
+          if (clients.length === 0) {
+            clientList.innerHTML = '<p>No clients found.</p>';
+            return;
+          }
+
+          clients.forEach(client => {
+            const card = document.createElement('div');
+            card.className = 'client-card';
+            card.innerHTML = `
+              <h4>${client.name}</h4>
+              <span class="status-badge" data-status="${client.status}">${client.status}</span>
+              <p>📧 ${client.email || 'No Email'}</p>
+            `;
+
+            // Add event listener to open detail view on click
+            card.addEventListener('click', () => {
+              // Here you would populate the detail view with the client's data
+              document.querySelector('#detail-view h3').textContent = client.name;
+              document.querySelector('#detail-view .detail-content').innerHTML = `<p>More details about ${client.name} would go here.</p>`;
+              detailView.classList.add('active');
+            });
+
+            clientList.appendChild(card);
+          });
+        } catch (error) {
+          console.error('Error loading clients:', error);
+          clientList.innerHTML = '<p style="color: #fca5a5;">Failed to load client data.</p>';
+        }
+      }
+
+      loadClients();
+    });
+  </script>
+</body>
+</html>

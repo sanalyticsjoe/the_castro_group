@@ -1,0 +1,8 @@
+# Environment variables
+.env
+
+# Node modules
+node_modules/
+
+# Netlify functions build cache
+.netlify/
