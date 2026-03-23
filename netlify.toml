@@ -1,13 +1,10 @@
-# real-estate-app/netlify.toml
-
 [build]
-  # This is the directory where your serverless functions are located.
-  functions = "functions"
-  # This is the directory that contains your index.html and other static assets.
+  # This replaces your --dir=public flag
   publish = "public"
+  
+  # This replaces your --functions flag
+  functions = "netlify/functions"
 
 [dev]
-  # This tells the dev server to serve the 'public' directory.
-  publish = "public"
-  # The port for the local development server.
+  # Optional, but helpful: Tells the local dev server what port to use
   port = 8888
