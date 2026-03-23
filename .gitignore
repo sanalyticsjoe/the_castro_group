@@ -1,8 +1,4 @@
-# Environment variables
+node_modules
 .env
-
-# Node modules
-node_modules/
-
-# Netlify functions build cache
-.netlify/
+# Local Netlify folder
+.netlify

@@ -1,27 +1,36 @@
 // netlify/functions/get-clients.js
+require('dotenv').config();
+const { Client } = require('@notionhq/client');
+
+const { NOTION_API_KEY, NOTION_DATABASE_ID } = process.env;
+
+// Initialize the Notion client
+const notion = new Client({ auth: NOTION_API_KEY });
 
 exports.handler = async function(event, context) {
-  try {
-    const API_KEY = process.env.NOTION_API_KEY;
-    const DB_ID = process.env.NOTION_DATABASE_ID; 
+  // A check to ensure environment variables are loaded in the function's environment
+  if (!NOTION_API_KEY || !NOTION_DATABASE_ID) {
+    console.error('Server Error: Missing NOTION_API_KEY or NOTION_DATABASE_ID');
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Internal server configuration error.' }),
+    };
+  }
 
-    const response = await fetch(`https://api.notion.com/v1/databases/${DB_ID}/query`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json'
-      }
+  try {
+    // STEP 1: Retrieve the database object to find its underlying data source.
+    // This is the required flow for this version of the Notion client.
+    const dbInfo = await notion.databases.retrieve({
+      database_id: NOTION_DATABASE_ID
     });
 
-    if (!response.ok) {
-      const errorData = await response.text();
-      return { statusCode: response.status, body: `Notion Error: ${errorData}` };
-    }
+    // STEP 2: Query the data source using the ID from the database object.
+    const response = await notion.dataSources.query({
+      data_source_id: dbInfo.data_sources[0].id,
+    });
 
-    const data = await response.json();
-
-    const clients = data.results.map(page => {
+    // Map the results to a cleaner format for your front-end
+    const clients = response.results.map(page => {
       return {
         id: page.id,
         name: page.properties.Name?.title[0]?.plain_text || 'Unnamed Client',
@@ -33,11 +42,20 @@ exports.handler = async function(event, context) {
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        // Optional: Add CORS headers here if your frontend is on a different domain
+        // 'Access-Control-Allow-Origin': '*' 
+      },
       body: JSON.stringify(clients)
     };
 
   } catch (error) {
-    console.error(error);
-    return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+    console.error('Failed to fetch from Notion:', error);
+    // Send a generic error message to the client for security
+    return { 
+      statusCode: 500, 
+      body: JSON.stringify({ error: 'Failed to fetch clients from Notion.' }) 
+    };
   }
+};
