@@ -41,14 +41,3 @@ exports.handler = async function(event, context) {
     console.error(error);
     return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
   }
-};
-
-exports.handler = async function(event, context) {
-  // Ensure you have the required environment variables
-  console.log("Checking environment variables...");
-  console.log("NOTION_API_KEY:", NOTION_API_KEY);
-  console.log("NOTION_CLIENTS_DB_ID:", NOTION_CLIENTS_DB_ID);
-
-  if (!NOTION_API_KEY || !NOTION_CLIENTS_DB_ID) {
-    return {
-      statusCode: 500,

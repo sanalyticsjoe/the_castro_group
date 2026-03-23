@@ -343,7 +343,7 @@
         try {
           // This endpoint needs to be created on your server (e.g., as a Netlify Function)
           // It should connect to your Notion database and return the client data.
-          const response = await fetch('/api/get-clients');
+          const response = await fetch('/.netlify/functions/get-clients');
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
