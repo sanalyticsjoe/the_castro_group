@@ -1,61 +1,58 @@
-// netlify/functions/get-clients.js
+const { Client } = require("@notionhq/client");
 require('dotenv').config();
-const { Client } = require('@notionhq/client');
 
-const { MY_NOTION_API_KEY, NOTION_DATABASE_ID } = process.env;
-
-// Initialize the Notion client
-const notion = new Client({ auth: MY_NOTION_API_KEY });
+const notion = new Client({ auth: process.env.NOTION_TOKEN });
+const databaseId = process.env.NOTION_DATABASE_ID;
 
 exports.handler = async function(event, context) {
-  // A check to ensure environment variables are loaded in the function's environment
-  if (!MY_NOTION_API_KEY || !NOTION_DATABASE_ID) {
-    console.error('Server Error: Missing NOTION_API_KEY or NOTION_DATABASE_ID');
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server configuration error.' }),
-    };
-  }
-
   try {
-    // STEP 1: Retrieve the database object to find its underlying data source.
-    // This is the required flow for this version of the Notion client.
-    const dbInfo = await notion.databases.retrieve({
-      database_id: NOTION_DATABASE_ID
-    });
+    if (!databaseId) {
+      throw new Error("NOTION_DATABASE_ID is not set in environment variables.");
+    }
 
-    // STEP 2: Query the data source using the ID from the database object.
+    const dbInfo = await notion.databases.retrieve({ database_id: databaseId });
+    const dataSourceId = dbInfo.data_sources[0].id;
+
     const response = await notion.dataSources.query({
-      data_source_id: dbInfo.data_sources[0].id,
+      data_source_id: dataSourceId,
     });
 
-    // Map the results to a cleaner format for your front-end
     const clients = response.results.map(page => {
+      const { properties } = page;
+      let photoUrl = null;
+
+      // This assumes your "Files & media" property in Notion is named "Photo"
+      const photoProperty = properties.Photo;
+      if (photoProperty && photoProperty.files && photoProperty.files.length > 0) {
+        const fileInfo = photoProperty.files[0];
+        if (fileInfo.type === 'external') {
+          photoUrl = fileInfo.external.url;
+        } else if (fileInfo.type === 'file') {
+          // Note: Notion-hosted file URLs are temporary and expire after one hour.
+          photoUrl = fileInfo.file.url;
+        }
+      }
+
       return {
         id: page.id,
-        name: page.properties.Name?.title[0]?.plain_text || 'Unnamed Client',
-        status: page.properties.Status?.status?.name || 'No Status',
-        phone: page.properties.Phone?.phone_number || 'No Phone',
-        email: page.properties.Email?.email || 'No Email'
+        name: properties.Name?.title[0]?.plain_text || 'No Name',
+        status: properties.Status?.status?.name || 'No Status',
+        email: properties.Email?.email || null,
+        phone: properties.Phone?.phone_number || null,
+        photoUrl: photoUrl
       };
     });
 
     return {
       statusCode: 200,
-      headers: { 
-        'Content-Type': 'application/json',
-        // Optional: Add CORS headers here if your frontend is on a different domain
-        // 'Access-Control-Allow-Origin': '*' 
-      },
-      body: JSON.stringify(clients)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(clients),
     };
-
   } catch (error) {
-    console.error('Failed to fetch from Notion:', error);
-    // Send a generic error message to the client for security
-    return { 
-      statusCode: 500, 
-      body: JSON.stringify({ error: 'Failed to fetch clients from Notion.' }) 
+    console.error('Error fetching from Notion:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: error.message || 'Failed to fetch data from Notion' }),
     };
   }
 };
